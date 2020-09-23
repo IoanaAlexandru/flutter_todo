@@ -64,7 +64,6 @@ class _MyHomePageState extends State<MyHomePage> {
     // The Flutter framework has been optimized to make rerunning build methods
     // fast, so that you can just rebuild anything that needs updating rather
     // than having to individually change instances of widgets.
-    var service = Provider.of<ToDoService>(context);
     return Scaffold(
       appBar: AppBar(
         // Here we take the value from the MyHomePage object that was created by
@@ -72,27 +71,11 @@ class _MyHomePageState extends State<MyHomePage> {
         title: Text(widget.title),
       ),
       body: FutureBuilder(
-          future: service.todos,
+          future: Provider.of<ToDoService>(context).todos,
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.done) {
               List<ToDo> todos = snapshot.data ?? [];
-              return ListView.builder(
-                itemCount: todos.length,
-                itemBuilder: (context, i) => CheckboxListTile(
-                  controlAffinity: ListTileControlAffinity.leading,
-                  value: todos[i].done,
-                  title: Text(
-                    todos[i].title,
-                    style: todos[i].done
-                        ? TextStyle(decoration: TextDecoration.lineThrough)
-                        : TextStyle(),
-                  ),
-                  onChanged: (newValue) {
-                    setState(() => todos[i].done = newValue);
-                    service.update(todos[i]);
-                  },
-                ),
-              );
+              return TodoList(initialTodos: todos);
             } else {
               return Center(child: CircularProgressIndicator());
             }
@@ -103,6 +86,58 @@ class _MyHomePageState extends State<MyHomePage> {
         tooltip: 'Add todo',
         child: Icon(Icons.add),
       ), // This trailing comma makes auto-formatting nicer for build methods.
+    );
+  }
+}
+
+class TodoList extends StatefulWidget {
+  final List<ToDo> initialTodos;
+
+  const TodoList({Key key, this.initialTodos}) : super(key: key);
+
+  @override
+  _TodoListState createState() => _TodoListState();
+}
+
+class _TodoListState extends State<TodoList> {
+  List<ToDo> todos;
+
+  @override
+  void initState() {
+    super.initState();
+    todos = widget.initialTodos;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.builder(
+      itemCount: todos.length,
+      itemBuilder: (context, i) => Row(
+        children: [
+          Expanded(
+            child: CheckboxListTile(
+              controlAffinity: ListTileControlAffinity.leading,
+              value: todos[i].done,
+              title: Text(
+                todos[i].title,
+                style: todos[i].done
+                    ? TextStyle(decoration: TextDecoration.lineThrough)
+                    : TextStyle(),
+              ),
+              onChanged: (newValue) {
+                setState(() => todos[i].done = newValue);
+                Provider.of<ToDoService>(context).update(todos[i]);
+              },
+            ),
+          ),
+          if (todos[i].done)
+            IconButton(
+                icon: Icon(Icons.delete),
+                onPressed: () =>
+                    Provider.of<ToDoService>(context, listen: false)
+                        .delete(todos[i].id)),
+        ],
+      ),
     );
   }
 }

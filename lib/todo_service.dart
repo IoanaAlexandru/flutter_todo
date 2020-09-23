@@ -29,7 +29,16 @@ create table $tableTodo (
   }
 
   Future<int> update(ToDo todo) async {
-    return await db.update(tableTodo, todo.toMap(),
+    var res = await db.update(tableTodo, todo.toMap(),
         where: '$columnId = ?', whereArgs: [todo.id]);
+    notifyListeners();
+    return res;
+  }
+
+  Future<int> delete(int id) async {
+    var res =
+        await db.delete(tableTodo, where: '$columnId = ?', whereArgs: [id]);
+    notifyListeners();
+    return res;
   }
 }
