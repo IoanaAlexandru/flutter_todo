@@ -3,8 +3,11 @@ import 'package:provider/provider.dart';
 import 'package:to_do/todo.dart';
 import 'package:to_do/todo_service.dart';
 
-void main() {
-  runApp(ChangeNotifierProvider(create: (_) => ToDoService(), child: MyApp()));
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  ToDoService service = ToDoService();
+  await service.open('todo.db');
+  runApp(ChangeNotifierProvider(create: (_) => service, child: MyApp()));
 }
 
 class MyApp extends StatelessWidget {
@@ -55,33 +58,45 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
-    List<ToDo> todos = Provider.of<ToDoService>(context).todos;
     // This method is rerun every time setState is called, for instance as done
     // by the _incrementCounter method above.
     //
     // The Flutter framework has been optimized to make rerunning build methods
     // fast, so that you can just rebuild anything that needs updating rather
     // than having to individually change instances of widgets.
+    var service = Provider.of<ToDoService>(context);
     return Scaffold(
       appBar: AppBar(
         // Here we take the value from the MyHomePage object that was created by
         // the App.build method, and use it to set our appbar title.
         title: Text(widget.title),
       ),
-      body: ListView.builder(
-        itemCount: todos.length,
-        itemBuilder: (context, i) => CheckboxListTile(
-          controlAffinity: ListTileControlAffinity.leading,
-          value: todos[i].done,
-          title: Text(
-            todos[i].content,
-            style: todos[i].done
-                ? TextStyle(decoration: TextDecoration.lineThrough)
-                : TextStyle(),
-          ),
-          onChanged: (newValue) => setState(() => todos[i].done = newValue),
-        ),
-      ),
+      body: FutureBuilder(
+          future: service.todos,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.done) {
+              List<ToDo> todos = snapshot.data ?? [];
+              return ListView.builder(
+                itemCount: todos.length,
+                itemBuilder: (context, i) => CheckboxListTile(
+                  controlAffinity: ListTileControlAffinity.leading,
+                  value: todos[i].done,
+                  title: Text(
+                    todos[i].title,
+                    style: todos[i].done
+                        ? TextStyle(decoration: TextDecoration.lineThrough)
+                        : TextStyle(),
+                  ),
+                  onChanged: (newValue) {
+                    setState(() => todos[i].done = newValue);
+                    service.update(todos[i]);
+                  },
+                ),
+              );
+            } else {
+              return Center(child: CircularProgressIndicator());
+            }
+          }),
       floatingActionButton: FloatingActionButton(
         onPressed: () => Navigator.push(
             context, MaterialPageRoute(builder: (_) => AddTodoPage())),
@@ -104,7 +119,7 @@ class AddTodoPage extends StatelessWidget {
           FlatButton(
             onPressed: () {
               Provider.of<ToDoService>(context, listen: false)
-                  .addTodo(ToDo(content: controller.text));
+                  .addTodo(ToDo(title: controller.text));
               Navigator.pop(context);
             },
             child: Text(
