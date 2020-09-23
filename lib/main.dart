@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:to_do/todo.dart';
+import 'package:to_do/todo_service.dart';
 
 void main() {
-  runApp(MyApp());
+  runApp(ChangeNotifierProvider(create: (_) => ToDoService(), child: MyApp()));
 }
 
 class MyApp extends StatelessWidget {
@@ -51,13 +53,9 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  List<ToDo> todos = [
-    ToDo(content: 'Feed the dog'),
-    ToDo(content: 'Walk the cat', done: true)
-  ];
-
   @override
   Widget build(BuildContext context) {
+    List<ToDo> todos = Provider.of<ToDoService>(context).todos;
     // This method is rerun every time setState is called, for instance as done
     // by the _incrementCounter method above.
     //
@@ -95,6 +93,8 @@ class _MyHomePageState extends State<MyHomePage> {
 }
 
 class AddTodoPage extends StatelessWidget {
+  final TextEditingController controller = TextEditingController();
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -103,6 +103,8 @@ class AddTodoPage extends StatelessWidget {
         actions: [
           FlatButton(
             onPressed: () {
+              Provider.of<ToDoService>(context, listen: false)
+                  .addTodo(ToDo(content: controller.text));
               Navigator.pop(context);
             },
             child: Text(
@@ -117,6 +119,7 @@ class AddTodoPage extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: TextFormField(
+              controller: controller,
               decoration: InputDecoration(labelText: 'TODO'),
             ),
           ),
