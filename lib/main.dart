@@ -85,12 +85,44 @@ class _MyHomePageState extends State<MyHomePage> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          /* TODO */
-        },
+        onPressed: () => Navigator.push(
+            context, MaterialPageRoute(builder: (_) => AddTodoPage())),
         tooltip: 'Add todo',
         child: Icon(Icons.add),
       ), // This trailing comma makes auto-formatting nicer for build methods.
+    );
+  }
+}
+
+class AddTodoPage extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Add new TODO'),
+        actions: [
+          FlatButton(
+            onPressed: () {
+              Navigator.pop(context);
+            },
+            child: Text(
+              'Save',
+              style: TextStyle(color: Colors.white),
+            ),
+          )
+        ],
+      ),
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: TextFormField(
+              decoration: InputDecoration(labelText: 'TODO'),
+            ),
+          ),
+          Image.asset('assets/todo.png'),
+        ],
+      ),
     );
   }
 }
